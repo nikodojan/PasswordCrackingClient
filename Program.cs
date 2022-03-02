@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using PasswordClient.Models;
 
 namespace PasswordClient
 {
@@ -12,16 +13,19 @@ namespace PasswordClient
 
             PwTcpClient pwClient = new PwTcpClient("192.168.14.193", 10000);
             pwClient.RequestData();
-            Console.WriteLine(pwClient.Password);
+            
+            Console.WriteLine("Creating user info");
+            var userInfoArray = pwClient.Password.Split(':');
 
-            if (pwClient.Dict.Count > 0)
-            {
-                for (int i = 0; i < 10; i++)
-                {
-                    Console.WriteLine(pwClient.Dict[i]);
-                }
-            }
+            //var userInfoArray = @"Mohammed:mywygMzqC6QIJwxFGFv7zTYWQjc=".Split(':');
 
+            UserInfo user = new UserInfo(userInfoArray[0], userInfoArray[1]);
+
+
+
+            Console.WriteLine("Start cracking");
+            Cracking cracker = new Cracking();
+            cracker.RunCracking(user);
 
             Console.WriteLine("End");
             Console.ReadKey();

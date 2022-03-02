@@ -35,15 +35,7 @@ namespace PasswordClient
 
         public void RequestData()
         {
-            //try
-            //{
-                
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine(e);
-               
-            //}
+
             Console.WriteLine("Connected to server");
 
             _stream = _client.GetStream();
@@ -51,15 +43,10 @@ namespace PasswordClient
             _writer = new StreamWriter(_stream);
 
             Password = RequestPassword();
-            Console.WriteLine(Password);
 
-            if (Dict.Count == 0)
-            {
-                Dict = RequestDictionary();
-            }
-            
+            Dict = RequestDictionary();
 
-            Console.WriteLine("Data received");
+            Console.WriteLine("All data received");
         }
 
         /// <summary>
@@ -86,7 +73,7 @@ namespace PasswordClient
                     fs.Write(buffer, 0, thisRead);
                 }
                 fs.Close();
-                Console.WriteLine(">Filestream closed");
+                Console.WriteLine("Dictionary received");
             }
 
             // read all words from the received file and add them to a list
@@ -100,10 +87,11 @@ namespace PasswordClient
 
         public string RequestPassword()
         {
-            Console.WriteLine("requesting pw");
+            Console.WriteLine("Requesting pw");
             _writer.WriteLine("password");
             _writer.Flush();
             string pw =_reader.ReadLine();
+            Console.WriteLine("Password received");
             return pw;
         }
 

@@ -13,7 +13,7 @@ namespace PasswordClient.Models
     /// This must be Base64 encoded (converted to a string) before written to the file 
     /// </summary>
     [Serializable]
-    class UserInfo
+    public class UserInfo
     {
         public String Username { get; set; }
         public String EntryptedPasswordBase64 { get; set; }

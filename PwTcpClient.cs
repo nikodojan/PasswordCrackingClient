@@ -12,7 +12,7 @@ namespace PasswordClient
 {
     public class PwTcpClient
     {
-        private readonly TcpClient _client;
+        private TcpClient _client;
         private NetworkStream _stream;
         private StreamReader _reader;
         private StreamWriter _writer;
@@ -22,21 +22,42 @@ namespace PasswordClient
 
         public PwTcpClient(string hostname, int port)
         {
-            _client = new TcpClient(hostname, port);
+            IpAddress = hostname;
+            Port = port;
+            _client = new TcpClient(IpAddress, Port);
+
         }
 
         public List<string> Dict { get; set; } = new List<string>();
         public string Password { get; set; }
+        public string IpAddress { get; set; }
+        public int Port { get; set; }
 
-        public void ConnectToServer()
+        public void RequestData()
         {
+            //try
+            //{
+                
+            //}
+            //catch (Exception e)
+            //{
+            //    Console.WriteLine(e);
+               
+            //}
+            Console.WriteLine("Connected to server");
+
             _stream = _client.GetStream();
             _reader = new StreamReader(_stream);
             _writer = new StreamWriter(_stream);
 
             Password = RequestPassword();
+            Console.WriteLine(Password);
 
-            Dict = RequestDictionary();
+            if (Dict.Count == 0)
+            {
+                Dict = RequestDictionary();
+            }
+            
 
             Console.WriteLine("Data received");
         }
@@ -79,6 +100,7 @@ namespace PasswordClient
 
         public string RequestPassword()
         {
+            Console.WriteLine("requesting pw");
             _writer.WriteLine("password");
             _writer.Flush();
             string pw =_reader.ReadLine();

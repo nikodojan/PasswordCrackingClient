@@ -10,8 +10,8 @@ namespace PasswordClient
         {
             Console.WriteLine("Hello World!");
 
-            PwTcpClient pwClient = new PwTcpClient("ipaddress", 1000);
-            pwClient.ConnectToServer();
+            PwTcpClient pwClient = new PwTcpClient("192.168.14.193", 10000);
+            pwClient.RequestData();
             Console.WriteLine(pwClient.Password);
 
             for (int i = 0; i < 10; i++)

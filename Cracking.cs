@@ -19,8 +19,7 @@ namespace PasswordClient
         /// </summary>
         private readonly HashAlgorithm _messageDigest;
 
-        private const string FilePath =
-            @"D:\_4thSem\_SECURITY\PasswordCrackingAssignment\PasswordClient\PasswordClient\Files\dictionary.txt";
+        private string FilePath = LocalPathes.Files + "dictionary.txt";
 
         public Cracking()
         {

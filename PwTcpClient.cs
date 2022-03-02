@@ -17,8 +17,7 @@ namespace PasswordClient
         private StreamReader _reader;
         private StreamWriter _writer;
 
-        private const string Dir =
-            @"D:\_4thSem\_SECURITY\PasswordCrackingAssignment\PasswordClient\PasswordClient\Files\";
+        private string Dir = LocalPathes.Files;
 
         public PwTcpClient(string hostname, int port)
         {

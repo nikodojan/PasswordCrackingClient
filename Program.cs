@@ -11,8 +11,8 @@ namespace PasswordClient
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-
-            PwTcpClient pwClient = new PwTcpClient("localhost", 10000);
+            //192.168.14.193
+            PwTcpClient pwClient = new PwTcpClient("192.168.14.193", 10000);
             pwClient.RequestData();
             
             Console.WriteLine("Creating user info");

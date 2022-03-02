@@ -43,7 +43,7 @@ namespace PasswordClient
             _writer = new StreamWriter(_stream);
 
             Password = RequestPassword();
-
+            Console.WriteLine("Debug: pw received");
             Dict = RequestDictionary();
 
             Console.WriteLine("All data received");
@@ -59,7 +59,7 @@ namespace PasswordClient
             _writer.WriteLine("dictionary");
             _writer.Flush();
             List<string> words = new List<string>();
-
+            Console.WriteLine("Debug: dict requested");
             // receive a file from the server and save it in the specified directory with the specified filename
             int thisRead = 1;
             int bytesPerRead = 1024;
@@ -67,6 +67,7 @@ namespace PasswordClient
 
             using (FileStream fs = File.Create(Dir + "dictionary.txt"))
             {
+                Console.WriteLine("Start reading dictionary");
                 while (thisRead > 0)
                 {
                     thisRead = _stream.Read(buffer, 0, buffer.Length);

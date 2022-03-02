@@ -74,7 +74,7 @@ namespace PasswordClient
             List<string> words = new List<string>();
 
             // receive a file from the server and save it in the specified directory with the specified filename
-            int thisRead = 0;
+            int thisRead = 1;
             int bytesPerRead = 1024;
             byte[] buffer = new byte[bytesPerRead];
 

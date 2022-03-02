@@ -14,12 +14,16 @@ namespace PasswordClient
             pwClient.RequestData();
             Console.WriteLine(pwClient.Password);
 
-            for (int i = 0; i < 10; i++)
+            if (pwClient.Dict.Count > 0)
             {
-                Console.WriteLine(pwClient.Dict[i]);
+                for (int i = 0; i < 10; i++)
+                {
+                    Console.WriteLine(pwClient.Dict[i]);
+                }
             }
 
 
+            Console.WriteLine("End");
             Console.ReadKey();
         }
     }

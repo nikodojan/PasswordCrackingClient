@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using PasswordClient.Models;
 using PasswordClient.util;
@@ -19,27 +21,40 @@ namespace PasswordClient
         /// </summary>
         private readonly HashAlgorithm _messageDigest;
 
-        private string FilePath = LocalPathes.Files + "dictionary.txt";
+        private string FilePath = "dictionary.txt";
+
 
         public Cracking()
         {
             _messageDigest = new SHA1CryptoServiceProvider();
             //_messageDigest = new MD5CryptoServiceProvider();
             // seems to be same speed
+
+        }
+        public UserInfoClearText RunCracking(UserInfo userInfo, List<string> words)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
+            Console.WriteLine("User Info opened");
+
+            foreach (var word in words)
+            {
+                UserInfoClearText partialResult = CheckWordWithVariations(word, userInfo);
+                if (partialResult is not null) return partialResult;
+            }
+            
+            stopwatch.Stop();
+            return null;
         }
 
         /// <summary>
         /// Runs the password cracking algorithm
         /// </summary>
-        public void RunCracking(UserInfo userInfo)
+        public UserInfoClearText RunCracking(UserInfo userInfo)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
 
-            List<UserInfo> userInfos = new List<UserInfo>();
-            userInfos.Add(userInfo);
-            Console.WriteLine("passwd opeend");
-
-            List<UserInfoClearText> result = new List<UserInfoClearText>();
+            Console.WriteLine("User Info opened");
 
             using (FileStream fs = new FileStream(FilePath, FileMode.Open, FileAccess.Read))
 
@@ -48,55 +63,61 @@ namespace PasswordClient
                 while (!dictionary.EndOfStream)
                 {
                     String dictionaryEntry = dictionary.ReadLine();
-                    IEnumerable<UserInfoClearText> partialResult = CheckWordWithVariations(dictionaryEntry, userInfos);
-                    result.AddRange(partialResult);
+                    UserInfoClearText partialResult = CheckWordWithVariations(dictionaryEntry, userInfo);
+                    if (partialResult is not null)
+                    {
+                        stopwatch.Stop();
+                        Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
+                        return partialResult;
+                    };
                 }
             }
-            stopwatch.Stop();
-            Console.WriteLine(string.Join(", ", result));
-            Console.WriteLine("Out of {0} password {1} was found ", userInfos.Count, result.Count);
-            Console.WriteLine();
-            Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
+
+            return null;
+            //Console.WriteLine(string.Join(", ", result));
+            //Console.WriteLine("Out of {0} password {1} was found ", userInfos.Count, result.Count);
+            //Console.WriteLine();
+            
         }
 
         /// <summary>
         /// Generates a lot of variations, encrypts each of the and compares it to all entries in the password file
         /// </summary>
         /// <param name="dictionaryEntry">A single word from the dictionary</param>
-        /// <param name="userInfos">List of (username, encrypted password) pairs from the password file</param>
+        /// <param name="userInfo">List of (username, encrypted password) pairs from the password file</param>
         /// <returns>A list of (username, readable password) pairs. The list might be empty</returns>
-        private IEnumerable<UserInfoClearText> CheckWordWithVariations(String dictionaryEntry, List<UserInfo> userInfos)
+        public UserInfoClearText CheckWordWithVariations(String dictionaryEntry, UserInfo userInfo)
         {
             List<UserInfoClearText> result = new List<UserInfoClearText>(); //might be empty
-
+            
             String possiblePassword = dictionaryEntry;
-            IEnumerable<UserInfoClearText> partialResult = CheckSingleWord(userInfos, possiblePassword);
-            result.AddRange(partialResult);
+            UserInfoClearText partialResult = CheckSingleWord(userInfo, possiblePassword);
+            if (partialResult is not null) return partialResult;
 
             String possiblePasswordUpperCase = dictionaryEntry.ToUpper();
-            IEnumerable<UserInfoClearText> partialResultUpperCase = CheckSingleWord(userInfos, possiblePasswordUpperCase);
-            result.AddRange(partialResultUpperCase);
+            UserInfoClearText partialResultUpperCase = CheckSingleWord(userInfo, possiblePasswordUpperCase);
+            if (partialResultUpperCase is not null) return partialResultUpperCase;
 
             String possiblePasswordCapitalized = StringUtilities.Capitalize(dictionaryEntry);
-            IEnumerable<UserInfoClearText> partialResultCapitalized = CheckSingleWord(userInfos, possiblePasswordCapitalized);
-            result.AddRange(partialResultCapitalized);
+            UserInfoClearText partialResultCapitalized = CheckSingleWord(userInfo, possiblePasswordCapitalized);
+            if (partialResultCapitalized is not null) return partialResultCapitalized;
 
             String possiblePasswordReverse = StringUtilities.Reverse(dictionaryEntry);
-            IEnumerable<UserInfoClearText> partialResultReverse = CheckSingleWord(userInfos, possiblePasswordReverse);
-            result.AddRange(partialResultReverse);
+            UserInfoClearText partialResultReverse = CheckSingleWord(userInfo, possiblePasswordReverse);
+            if (partialResultReverse is not null) return partialResultReverse;
 
             for (int i = 0; i < 100; i++)
             {
                 String possiblePasswordEndDigit = dictionaryEntry + i;
-                IEnumerable<UserInfoClearText> partialResultEndDigit = CheckSingleWord(userInfos, possiblePasswordEndDigit);
-                result.AddRange(partialResultEndDigit);
+                UserInfoClearText partialResultEndDigit = CheckSingleWord(userInfo, possiblePasswordEndDigit);
+                if (partialResultEndDigit is not null) return partialResultEndDigit;
             }
 
             for (int i = 0; i < 100; i++)
             {
                 String possiblePasswordStartDigit = i + dictionaryEntry;
-                IEnumerable<UserInfoClearText> partialResultStartDigit = CheckSingleWord(userInfos, possiblePasswordStartDigit);
-                result.AddRange(partialResultStartDigit);
+                UserInfoClearText partialResultStartDigit = CheckSingleWord(userInfo, possiblePasswordStartDigit);
+                if (partialResultStartDigit is not null) return partialResultStartDigit;
             }
 
             for (int i = 0; i < 10; i++)
@@ -104,12 +125,12 @@ namespace PasswordClient
                 for (int j = 0; j < 10; j++)
                 {
                     String possiblePasswordStartEndDigit = i + dictionaryEntry + j;
-                    IEnumerable<UserInfoClearText> partialResultStartEndDigit = CheckSingleWord(userInfos, possiblePasswordStartEndDigit);
-                    result.AddRange(partialResultStartEndDigit);
+                    UserInfoClearText partialResultStartEndDigit = CheckSingleWord(userInfo, possiblePasswordStartEndDigit);
+                    if (partialResultStartEndDigit is not null) return partialResultStartEndDigit;
                 }
             }
-
-            return result;
+            
+            return null;
         }
 
         /// <summary>
@@ -118,7 +139,7 @@ namespace PasswordClient
         /// <param name="userInfos"></param>
         /// <param name="possiblePassword">List of (username, encrypted password) pairs from the password file</param>
         /// <returns>A list of (username, readable password) pairs. The list might be empty</returns>
-        private IEnumerable<UserInfoClearText> CheckSingleWord(IEnumerable<UserInfo> userInfos, String possiblePassword)
+        private UserInfoClearText CheckSingleWord(UserInfo userInfo, String possiblePassword)
         {
             char[] charArray = possiblePassword.ToCharArray();
             byte[] passwordAsBytes = Array.ConvertAll(charArray, PasswordFileHandler.GetConverter());
@@ -126,17 +147,14 @@ namespace PasswordClient
             byte[] encryptedPassword = _messageDigest.ComputeHash(passwordAsBytes);
             //string encryptedPasswordBase64 = System.Convert.ToBase64String(encryptedPassword);
 
-            List<UserInfoClearText> results = new List<UserInfoClearText>();
-
-            foreach (UserInfo userInfo in userInfos)
+            
+            if (CompareBytes(userInfo.EntryptedPassword, encryptedPassword))  //compares byte arrays
             {
-                if (CompareBytes(userInfo.EntryptedPassword, encryptedPassword))  //compares byte arrays
-                {
-                    results.Add(new UserInfoClearText(userInfo.Username, possiblePassword));
-                    Console.WriteLine(userInfo.Username + " " + possiblePassword);
-                }
+                Console.WriteLine(userInfo.Username + " " + possiblePassword);
+                return new UserInfoClearText(userInfo.Username, possiblePassword);
             }
-            return results;
+            
+            return null;
         }
 
         /// <summary>

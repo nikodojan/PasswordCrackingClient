@@ -12,7 +12,7 @@ namespace PasswordClient
 {
     internal class Program
     {
-        private const string ServerIp = "192.168.14.115";
+        private const string ServerIp = "localhost";
         private const int ServerPort = 10_000;
         //192.168.14.115
 

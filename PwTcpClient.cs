@@ -5,8 +5,10 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using PasswordClient.Models;
 
 namespace PasswordClient
 {
@@ -16,36 +18,44 @@ namespace PasswordClient
         private NetworkStream _stream;
         private StreamReader _reader;
         private StreamWriter _writer;
-
-        private string Dir = LocalPathes.Files;
-
+        
         public PwTcpClient(string hostname, int port)
         {
             IpAddress = hostname;
             Port = port;
-            _client = new TcpClient(IpAddress, Port);
-
         }
-
-        public List<string> Dict { get; set; } = new List<string>();
-        public string Password { get; set; }
+        
         public string IpAddress { get; set; }
         public int Port { get; set; }
 
-        public void RequestData()
+        /// <summary>
+        /// Connect to the server and create instances of: TcpClient, NetworkStream, StreamReader, StreamWriter
+        /// </summary>
+        public void ConnectToServer()
         {
-
+            _client = new TcpClient(IpAddress, Port);
             Console.WriteLine("Connected to server");
-
             _stream = _client.GetStream();
             _reader = new StreamReader(_stream);
             _writer = new StreamWriter(_stream);
+        }
 
-            Password = RequestPassword();
-            Console.WriteLine("Debug: pw received");
-            Dict = RequestDictionary();
-
-            Console.WriteLine("All data received");
+        /// <summary>
+        /// Disconnect from server. (Close all resources)
+        /// </summary>
+        public void Disconnect()
+        {
+            try
+            {
+                _reader?.Close();
+                _writer?.Close();
+                _stream?.Close();
+                _client?.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         /// <summary>
@@ -53,35 +63,30 @@ namespace PasswordClient
         /// Reads the received file into a List<string>.
         /// </summary>
         /// <returns></returns>
-        private List<string> RequestDictionary()
+        public List<string> RequestDictionary()
         {
             _writer.WriteLine("dictionary");
             _writer.Flush();
             List<string> words = new List<string>();
-            Console.WriteLine("Debug: dict requested");
             // receive a file from the server and save it in the specified directory with the specified filename
             int thisRead = 1;
             int bytesPerRead = 1024;
             byte[] buffer = new byte[bytesPerRead];
 
-            using (FileStream fs = File.Create(Dir + "dictionary.txt"))
+            using (FileStream fs = File.Create("dictionary.txt"))
             {
-                Console.WriteLine("Start reading dictionary");
                 while (thisRead > 0)
                 {
                     thisRead = _stream.Read(buffer, 0, buffer.Length);
                     fs.Write(buffer, 0, thisRead);
+                    if (thisRead < 1024) break;
                 }
                 fs.Close();
                 Console.WriteLine("Dictionary received");
             }
 
             // read all words from the received file and add them to a list
-            foreach (var line in File.ReadLines(Dir + "dictionary.txt"))
-            {
-                words.Add(line);
-            }
-
+            words = File.ReadLines("dictionary.txt").ToList();
             return words;
         }
 
@@ -95,6 +100,17 @@ namespace PasswordClient
             return pw;
         }
 
+        public void ReportResult(UserInfoClearText result)
+        {
+            Console.WriteLine("Reporting in");
+            _writer.WriteLine("report");
+            _writer.Flush();
 
+            if(_reader.ReadLine() != "OK") _client.Close();
+            Console.WriteLine("Server accepts report");
+            var userInfo = result.UserName + ":" + result.Password;
+            _writer.WriteLine(userInfo);
+            _writer.Flush();
+        }
     }
 }

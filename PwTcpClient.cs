@@ -75,12 +75,13 @@ namespace PasswordClient
 
             using (FileStream fs = File.Create("dictionary.txt"))
             {
-                while (thisRead > 0)
+                do
                 {
                     thisRead = _stream.Read(buffer, 0, buffer.Length);
+
                     fs.Write(buffer, 0, thisRead);
-                    if (thisRead < 1024) break;
-                }
+                    Console.Write($"\r{thisRead}");
+                } while (_stream.DataAvailable);
                 fs.Close();
                 Console.WriteLine("Dictionary received");
             }
